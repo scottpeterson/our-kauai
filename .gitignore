@@ -1,0 +1,7 @@
+# The repo publishes the built public site only. Scripts, memories.toml, and
+# photos.json (raw GPS for every photo) stay on this Mac.
+/*
+!/.gitignore
+!/docs/
+/docs/private.html
+.DS_Store
