@@ -1,7 +1,8 @@
-# The repo publishes the built public site only. Scripts, memories.toml, and
-# photos.json (raw GPS for every photo) stay on this Mac.
+# The repo publishes the built public site and its generator. The other scripts,
+# memories.toml, and photos.json (raw GPS for every photo) stay on this Mac.
 /*
 !/.gitignore
 !/docs/
+!/build_site.py
 /docs/private.html
 .DS_Store
