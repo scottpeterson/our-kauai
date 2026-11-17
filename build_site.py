@@ -58,16 +58,22 @@ def link(href, text, cls=""):
     return f'<a href="{esc(href)}" target="_blank" rel="noopener"{f" class={chr(34)}{cls}{chr(34)}" if cls else ""}>{esc(text)}</a>'
 
 
-def table(headers, rows, lead_cols=1, caption=None, sortable=True, row_attrs=None):
-    """A table whose first `lead_cols` columns are left-aligned and whose data
-    columns are centered, header cells included. Headers sort on click unless
-    `sortable=False`. Pass cells as HTML strings; put a `data-sort` attribute
-    on a cell when its visible text is not what should sort (a date, a rank).
-    `row_attrs` holds one attribute string per row, for example `data-id="x"`."""
-    th = "".join(f'<th{" class=lead" if i < lead_cols else ""}{" role=button tabindex=0 aria-sort=none" if sortable else ""}>{h}</th>' for i, h in enumerate(headers))
+def table(headers, rows, lead_cols=1, caption=None, sortable=True, row_attrs=None, text_cols=()):
+    """A table whose first `lead_cols` columns and any `text_cols` (indexes of
+    text columns such as towns or years) are left-aligned. Every other column
+    is numeric and right-aligned, header cells included, so place values line
+    up. Headers sort on click unless `sortable=False`. Pass cells as HTML
+    strings; put a `data-sort` attribute on a cell when its visible text is not
+    what should sort (a date, a rank). `row_attrs` holds one attribute string
+    per row, for example `data-id="x"`."""
+
+    def cls(i):
+        return " class=lead" if i < lead_cols else (" class=txt" if i in text_cols else " class=num")
+
+    th = "".join(f'<th{cls(i)}{" role=button tabindex=0 aria-sort=none" if sortable else ""}>{h}</th>' for i, h in enumerate(headers))
     body = []
     for n, row in enumerate(rows):
-        td = "".join(f'<td{" class=lead" if i < lead_cols else ""}>{c}</td>' for i, c in enumerate(row))
+        td = "".join(f"<td{cls(i)}>{c}</td>" for i, c in enumerate(row))
         attrs = f" {row_attrs[n]}" if row_attrs else ""
         body.append(f"<tr{attrs}>{td}</tr>")
     cap = f"<caption>{esc(caption)}</caption>" if caption else ""
@@ -197,7 +203,7 @@ p{margin:0 0 var(--s3)}.sub{color:var(--muted);max-width:760px}.small{font-size:
 .ctlhead{display:flex;align-items:center;gap:var(--s2);flex-wrap:wrap}
 .bulk{border:0;background:transparent;color:var(--link);text-decoration:underline;text-underline-offset:2px;font-size:var(--fs-sm);padding:6px var(--s2);min-height:32px}
 .ctl>.seglabel,.ctlhead{min-height:32px;display:flex;align-items:center}
-.seglabel{font-size:var(--fs-caption);font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);padding-left:2px}
+.seglabel{font-size:var(--fs-caption);font-weight:500;color:var(--muted);padding-left:2px}
 .seg{display:inline-flex;align-items:stretch;border:1px solid var(--line);border-radius:999px;overflow:hidden;background:var(--surface)}
 .seg button{border:0;background:transparent;color:var(--muted);height:calc(var(--control-h) - 2px);padding:0 14px;font-size:var(--fs-md);min-width:44px}.seg button+button{border-left:1px solid var(--line)}
 .seg button.active{background:var(--accent);color:#fff;font-weight:600}.seg button.active::before{content:"\2713\00a0"}
@@ -253,15 +259,16 @@ p{margin:0 0 var(--s3)}.sub{color:var(--muted);max-width:760px}.small{font-size:
 .leaflet-container{font:inherit}.mapview{box-shadow:0 1px 4px rgba(0,0,0,.3)}.mapview button{padding:0 12px}.leaflet-tooltip{font-size:var(--fs-sm)}
 .tablewrap{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:14px}
 table{border-collapse:collapse;width:100%;font-size:var(--fs-md)}caption{text-align:left;padding:var(--s3) var(--s4) 0;font-weight:600}
-th,td{padding:var(--s2) var(--s3);border-top:1px solid var(--line);text-align:center;white-space:nowrap}
+th,td{padding:var(--s2) var(--s3);border-top:1px solid var(--line);text-align:left;white-space:nowrap}
 thead th{border-top:0;background:var(--surface2);font-weight:600;color:var(--muted)}
-th.lead,td.lead{text-align:left}td.lead{font-weight:600}
-.sortable th{cursor:pointer;user-select:none}.sortable th::after{content:"";display:inline-block;width:.9em;color:var(--faint)}.sortable th[aria-sort="ascending"]::after{content:"\25B4"}.sortable th[aria-sort="descending"]::after{content:"\25BE"}
+th.num,td.num{text-align:right}td.lead{font-weight:600}
+.sortable th{cursor:pointer;user-select:none}.sortable th::after{content:"";display:inline-block;width:.9em;color:var(--faint)}.sortable th[aria-sort="ascending"]::after{content:"\25B4"}.sortable th[aria-sort="descending"]::after{content:"\25BE"}.sortable th.num::before{content:"";display:inline-block;width:.9em;color:var(--faint)}.sortable th.num[aria-sort="ascending"]::before{content:"\25B4"}.sortable th.num[aria-sort="descending"]::before{content:"\25BE"}.sortable th.num::after{content:none}
 .group summary{list-style:none;cursor:pointer}.group summary::-webkit-details-marker{display:none}.group summary h2{display:inline-block;width:100%}
 .group summary h2::before{content:"\25BE";display:inline-block;width:1.1em;color:var(--muted)}.group:not([open]) summary h2::before{content:"\25B8"}
 .count{font-size:var(--fs-sm);font-weight:600;color:var(--muted);margin-left:var(--s2)}
 footer{margin-top:var(--s6);padding-top:var(--s4);border-top:1px solid var(--line);font-size:var(--fs-sm);color:var(--muted)}
 @media (max-width:899px){.explore{grid-template-columns:1fr}#map{height:58vh;min-height:320px}.panel{max-height:none}}
+@media (max-width:600px){:root{--pill:44px;--control-h:46px}.bulk{min-height:44px}.info{width:44px;height:44px}}
 @media (max-width:640px){main{padding:var(--s4) var(--s4) 48px}h1{font-size:var(--fs-h2)}.controls{width:100%}.panel{padding:var(--s4)}}
 """
 
@@ -652,7 +659,7 @@ def place_list(places):
                      esc(p["town"]), esc(cat["label"]), esc(years_text(p)), esc(status_text(p))])
         attrs.append(f'data-id="{esc(p["id"])}"')
     intro = '<p class="small">Sorted by name. Years come from the memory, or from the photos when the memory gives none. Select a column header to sort by it, or a name to open its memory on the map.</p>'
-    return twisty("All places", intro + table(["Place", "Town", "Category", "Years", "Status"], rows, row_attrs=attrs),
+    return twisty("All places", intro + table(["Place", "Town", "Category", "Years", "Status"], rows, row_attrs=attrs, text_cols=(1, 2, 3, 4)),
                   count=len(places), id_="places")
 
 
